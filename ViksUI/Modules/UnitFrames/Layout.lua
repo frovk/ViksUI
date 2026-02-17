@@ -128,7 +128,7 @@ local function Shared(self, unit)
 		-- Portrait on RIGHT side (offset 40px to the right - SEPARATE FRAME)
 		self.Portrait = CreateFrame("Frame", self:GetName().."_Portrait", self, "BackdropTemplate")
 		self.Portrait:SetSize(C.unitframe.layout2_portrait, C.unitframe.layout2_portrait)
-		self.Portrait:SetPoint("LEFT", self, "RIGHT", 40, 0)  -- 40px offset, completely separate
+		self.Portrait:SetPoint("TOPLEFT", self, "TOPRIGHT", 10, 0)  -- 10px offset, completely separate
 		self.Portrait:SetFrameLevel(5)
 		self.Portrait:SetTemplate("Default")
 		-- ApplyLayout2Border(self.Portrait)
@@ -192,7 +192,7 @@ local function Shared(self, unit)
 		-- Power Visual Frame (offset -5, -5 from health)
 		local powerFrame = CreateFrame("Frame", self:GetName().."_PowerFrame", self, "BackdropTemplate")
 		powerFrame:SetSize(healthFrame:GetWidth(), C.unitframe.layout2_h)  -- Match health frame width
-		powerFrame:SetPoint("TOPLEFT", healthFrame, "TOPLEFT", -6, -6)
+		powerFrame:SetPoint("TOPLEFT", healthFrame, "TOPLEFT", -6, -7)
 		powerFrame:SetFrameLevel(5)
 		powerFrame:SetTemplate("Default")
 		powerFrame:SetBackdropColor(unpack(C.media.border_color))
@@ -206,12 +206,13 @@ local function Shared(self, unit)
 		self.Power.frequentUpdates = true
 		self.Power.colorDisconnected = true
 		self.Power.colorTapping = true
-		self.Power.colorPower = true
+		-- self.Power.colorPower = true
+		self.Power.colorClass = true
 		if C.unitframe.plugins_smooth_bar == true then
 			self.Power.smoothing = Enum.StatusBarInterpolation.ExponentialEaseOut or 1
 		end
 		self.Power.PostUpdate = T.PostUpdatePower
-		self.Power.PostUpdateColor = T.PostUpdatePowerColor
+		-- self.Power.PostUpdateColor = T.PostUpdatePowerColor
 		self:RegisterEvent("UNIT_FLAGS", T.ForceUpdate)
 		self:RegisterEvent("UNIT_FACTION", T.ForceUpdate)
 		
@@ -234,16 +235,16 @@ local function Shared(self, unit)
 		-- Text Visual Frame (offset +6, -6 from power)
 		local textFrame = CreateFrame("Frame", self:GetName().."_TextFrame", self, "BackdropTemplate")
 		textFrame:SetSize(healthFrame:GetWidth(), C.unitframe.layout2_h-2)  -- Match power frame width
-		textFrame:SetPoint("TOPRIGHT", healthFrame, "BOTTOMRIGHT", 6, 14)
+		textFrame:SetPoint("TOPRIGHT", healthFrame, "BOTTOMRIGHT", 6, 13)
 		textFrame:SetFrameLevel(4)
 		textFrame:SetTemplate("Default")
-		textFrame:SetBackdropColor(.106,.106,.106,1)
 		-- CreateShadow_1(textFrame)
 		
 		-- Texture inside the text frame
 		local textBarTexture = textFrame:CreateTexture(nil, "BACKGROUND")
 		textBarTexture:SetAllPoints()
 		textBarTexture:SetTexture(C.unitframe.layout2_textbar_texture)
+		textBarTexture:SetVertexColor(.106,.106,.106,1)
 		
 		-- FlashInfo for low mana warning
 		self.FlashInfo = CreateFrame("Frame", "FlashInfo", self)
