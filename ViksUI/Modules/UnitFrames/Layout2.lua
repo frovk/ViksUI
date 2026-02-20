@@ -1,5 +1,5 @@
 local T, C, L = unpack(ViksUI)
-if C.unitframe.enable ~= true then return end
+if C.unitframe.enable ~= true or C.unitframe.layout2 ~= true then return end
 
 print("|cff00ff00Layout2.lua: Starting to load...|r")
 
@@ -13,6 +13,8 @@ end
 
 -- Store reference to CreateShadow from Layout.lua
 local CreateShadow
+
+C.unitframe.lines = false
 
 ----------------------------------------------------------------------------------------
 --	LAYOUT2 OPTIONS
@@ -56,7 +58,7 @@ local Layout2Tags = {
 			},
 			top_right = {
 				enable = false,
-				tag = "[drk:color2][drk:Shp]",
+				-- tag = "[drk:color2][drk:Shp]",
 				font_type = "number_font",
 				x = -2,
 				y = -1,
@@ -67,7 +69,7 @@ local Layout2Tags = {
 			enable = true,
 			bottom_left = {
 				enable = true,
-				tag = "[drk:color][drk:power2]",
+				-- tag = "[drk:color][drk:power2]",
 				font_type = "number_font",
 				x = 2,
 				y = 1,
@@ -125,7 +127,7 @@ local Layout2Tags = {
 			enable = true,
 			bottom_left = {
 				enable = true,
-				tag = "[drk:color][drk:power2]",
+				-- tag = "[drk:color][drk:power2]",
 				font_type = "number_font",
 				x = 2,
 				y = 1,
@@ -469,7 +471,7 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 				playerFramePortrait = self.Portrait
 			end
 			
-			-- Apply class color to portrait border if enabled
+			-- Apply class color border if enabled (use SetBackdropColor instead of SetBackdropBorderColor)
 			if C.unitframe.portrait_classcolor_border == true then
 				if unitType == "player" then
 					self.Portrait:SetBackdropColor(T.color.r, T.color.g, T.color.b)
@@ -502,16 +504,35 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 				self.Health:ClearAllPoints()
 				self.Health:SetAllPoints()
 				self.Health:SetStatusBarTexture(C.unitframe.layout2_health_texture)
-				self.Health:SetFrameLevel(Layout2Config.health.frame_level)
-				self.Health.colorTapping = true
-				self.Health.colorDisconnected = true
-				self.Health:SetStatusBarColor(0.2, 0.2, 0.2, 1)
+				self.Health:SetFrameLevel(Layout2Config.health.frame_level+1)
+				if C.unitframe.own_color == true then
+					self.Health.colorTapping = false
+					self.Health.colorDisconnected = false
+					self.Health.colorClass = false
+					self.Health.colorReaction = false
+					self.Health:SetStatusBarColor(unpack(C.unitframe.uf_color))
+				else
+					self.Health.colorTapping = true
+					self.Health.colorDisconnected = true
+					self.Health.colorClass = true
+					self.Health.colorReaction = true
+				end
+				if C.unitframe.plugins_smooth_bar == true then
+					self.Health.smoothing = Enum.StatusBarInterpolation.ExponentialEaseOut or 1
+				end
+
+				self.Health.PostUpdate = T.PostUpdateHealth
+				self.Health.PostUpdateColor = T.PostUpdateHealthColor
 				
 				if not self.Health.bg then
 					self.Health.bg = self.Health:CreateTexture(nil, "BORDER")
 					self.Health.bg:SetAllPoints()
 					self.Health.bg:SetTexture(C.unitframe.layout2_health_texture)
-					self.Health.bg:SetVertexColor(0.1, 0.1, 0.1, 0.2)
+					if C.unitframe.own_color == true then
+						self.Health.bg:SetVertexColor(unpack(C.unitframe.uf_color_bg))
+					else
+						self.Health.bg.multiplier = 0.2
+					end
 				end
 			end
 			
