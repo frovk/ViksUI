@@ -73,12 +73,23 @@ local Layout2Tags = {
 				y = -1,
 				justify = "RIGHT",
 			},
+			bottom_right = {
+				enable = false,
+				tag = "",  -- Set your desired tag here
+				font_type = "number_font",
+				font = nil,
+				size = nil,
+				style = nil,
+				x = -2,
+				y = 1,
+				justify = "RIGHT",
+			},
 		},
 		text_bar = {
 			enable = true,
 			bottom_left = {
 				enable = true,
-				-- tag = "[drk:color][drk:power2]",
+				tag = "[drk:color][power:current:shortvalue] || [power:max:shortvalue]",
 				font_type = "number_font",
 				font = nil,
 				size = nil,
@@ -89,7 +100,7 @@ local Layout2Tags = {
 			},
 			bottom_center = {
 				enable = false,
-				tag = "",
+				tag = "[drk:color]| - [missinghp:shortvalue]",
 				font_type = "name_font",
 				font = nil,
 				size = nil,
@@ -100,7 +111,7 @@ local Layout2Tags = {
 			},
 			bottom_right = {
 				enable = true,
-				tag = "[drk:color]",
+				tag = "[drk:color][NameplateHealth]",
 				font_type = "number_font",
 				font = nil,
 				size = nil,
@@ -118,7 +129,7 @@ local Layout2Tags = {
 			enable = true,
 			top_left = {
 				enable = true,
-				tag = "[GetNameColor][NameLong]",
+				tag = "[drk:level][GetNameColor] [NameLongAbbrev]",
 				font_type = "name_font",
 				font = nil,
 				size = nil,
@@ -129,7 +140,7 @@ local Layout2Tags = {
 			},
 			top_center = {
 				enable = false,
-				tag = "",
+				tag = "[DiffColor][classification]",
 				font_type = "name_font",
 				font = nil,
 				size = nil,
@@ -149,12 +160,23 @@ local Layout2Tags = {
 				y = -1,
 				justify = "RIGHT",
 			},
+			bottom_right = {
+				enable = true,
+				tag = "[DiffColor][classification]",
+				font_type = "number_font",
+				font = nil,
+				size = nil,
+				style = nil,
+				x = -2,
+				y = 1,
+				justify = "RIGHT",
+			},
 		},
 		text_bar = {
 			enable = true,
 			bottom_left = {
 				enable = true,
-				-- tag = "[drk:color][drk:power2]",
+				tag = "[drk:color][power:current:shortvalue] || [power:max:shortvalue]",
 				font_type = "number_font",
 				font = nil,
 				size = nil,
@@ -164,9 +186,9 @@ local Layout2Tags = {
 				justify = "LEFT",
 			},
 			bottom_center = {
-				enable = false,
-				tag = "",
-				font_type = "name_font",
+				enable = true,
+				tag = "[drk:color][missingpp:short] || [missinghp:short]",
+				font_type = "number_font",
 				font = nil,
 				size = nil,
 				style = nil,
@@ -379,6 +401,10 @@ local function ApplyHealthBarTags(self, unit)
 	if config.top_right and config.top_right.enable then
 		self.Health.TagTopRight = CreateTag(self, self.Health, config.top_right, "TOPRIGHT")
 	end
+
+    if config.bottom_right and config.bottom_right.enable then
+        self.Health.TagBottomRight = CreateTag(self, self.Health, config.bottom_right, "BOTTOMRIGHT")
+    end
 	
 	if config.show_missing_hp then
 		self.Health.TagMissingHP = T.SetFontString(self.Health, Layout2Fonts.number_font.font, Layout2Fonts.number_font.size, Layout2Fonts.number_font.style)
@@ -505,12 +531,12 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 			self.Portrait:SetFrameLevel(Layout2Config.portrait.frame_level)
 
 			-- Setup backdrop and shadow (only for non-PlayerModel frames)
-			if portraitType ~= "OVERLAY" or portraitType ~= "3D" then
+			if C.unitframe.portrait_type ~= "OVERLAY" and C.unitframe.portrait_type ~= "3D" then
 				self.Portrait:SetTemplate("Default")
 				self.Portrait:SetBackdropColor(unpack(C.media.border_color))
 				CreateShadow(self.Portrait)
 				
-				if portraitType == "ICONS" then
+				if C.unitframe.portrait_type == "ICONS" then
 					self.Portrait.classIcons = true
 				end
 				
@@ -518,6 +544,36 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 				self.Portrait.Icon = self.Portrait:CreateTexture(nil, "ARTWORK")
 				self.Portrait.Icon:SetAllPoints()
 				self.Portrait.Icon:SetTexCoord(unpack(Layout2Config.portrait.texcoord))
+			else
+				-- For 3D and OVERLAY types, create a background frame with colored backdrop
+				if C.unitframe.portrait_type == "3D" or C.unitframe.portrait_type == "ICONS" then
+					local bgFrame = CreateFrame("Frame", nil, self, "BackdropTemplate")  -- Parent is self, not self.Portrait
+					bgFrame:SetFrameLevel(self.Portrait:GetFrameLevel() - 1)
+					bgFrame:SetTemplate("Invisible")
+					bgFrame:SetBackdropColor(unpack(C.media.backdrop_color))
+					CreateShadow(bgFrame)
+					
+					-- Position background frame to match portrait with 1px inset
+					if unitType == "player" then
+						bgFrame:SetPoint(unpack(C.position.unitframes.player_portrait_2))
+					elseif unitType == "target" then
+						bgFrame:SetPoint(unpack(C.position.unitframes.target_portrait_2))
+					end
+					bgFrame:SetSize(Layout2Config.portrait.size, Layout2Config.portrait.size)
+					
+					-- Inset portrait 1px into the background frame
+					self.Portrait:ClearAllPoints()
+					self.Portrait:SetPoint("TOPLEFT", bgFrame, "TOPLEFT", 1, -1)
+					self.Portrait:SetPoint("BOTTOMRIGHT", bgFrame, "BOTTOMRIGHT", -1, 1)
+					
+					self.Portrait.backgroundFrame = bgFrame
+				end
+				
+				if C.unitframe.portrait_type ~= "OVERLAY" then
+					self.Portrait.Icon = self.Portrait:CreateTexture(nil, "ARTWORK")
+					self.Portrait.Icon:SetAllPoints()
+					self.Portrait.Icon:SetTexCoord(unpack(Layout2Config.portrait.texcoord))
+				end
 			end
 
 			-- Add fake .backdrop property for ALL frame types (for Layout.lua compatibility)
@@ -531,25 +587,25 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 			end
 
 			-- Apply class color to portrait backdrop if enabled (only for non-3D/OVERLAY)
-			if C.unitframe.portrait_classcolor_border == true and portraitType ~= "3D" and portraitType ~= "OVERLAY" then
-				if unitType == "player" then
-					self.Portrait:SetBackdropColor(T.color.r, T.color.g, T.color.b)
-				elseif unitType == "target" then
-					self.Portrait:RegisterEvent("PLAYER_TARGET_CHANGED")
-					self.Portrait:SetScript("OnEvent", function()
-						local _, class = UnitClass("target")
-						local color = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[class]
-						if color then
-							self.Portrait:SetBackdropColor(color.r, color.g, color.b)
-						else
-							self.Portrait:SetBackdropColor(unpack(C.media.border_color))
-						end
-					end)
-				end
-			end
+			-- if C.unitframe.portrait_classcolor_border == true and C.unitframe.portrait_type ~= "3D" and C.unitframe.portrait_type ~= "OVERLAY" then
+				-- if unitType == "player" then
+					-- self.Portrait:SetBackdropColor(T.color.r, T.color.g, T.color.b)
+				-- elseif unitType == "target" then
+					-- self.Portrait:RegisterEvent("PLAYER_TARGET_CHANGED")
+					-- self.Portrait:SetScript("OnEvent", function()
+						-- local _, class = UnitClass("target")
+						-- local color = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[class]
+						-- if color then
+							-- self.Portrait:SetBackdropColor(color.r, color.g, color.b)
+						-- else
+							-- self.Portrait:SetBackdropColor(unpack(C.media.border_color))
+						-- end
+					-- end)
+				-- end
+			-- end
 
 			-- OVERLAY specific positioning adjustments
-			if portraitType == "OVERLAY" and self.Health then
+			if C.unitframe.portrait_type == "OVERLAY" and self.Health then
 				local healthTex = self.Health:GetStatusBarTexture()
 				self.Portrait:ClearAllPoints()
 				self.Portrait:SetPoint("TOPLEFT", healthTex, "TOPLEFT", 0, 0)
@@ -691,6 +747,17 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 					self.Castbar:SetPoint("TOPRIGHT", textFrame, "BOTTOMRIGHT", -2, Layout2Config.castbar.offset_y)
 					self.Castbar:SetWidth(Layout2Config.text_bar.width-4)
 				end
+			end
+			
+				-- ========== PLAYER DEBUFFS REPOSITIONING ==========
+			if self.Debuffs and unitType == "player" then
+				self.Debuffs.size = C.aura.player_debuff_size
+				self.Debuffs:ClearAllPoints()
+				self.Debuffs:SetPoint("BOTTOMRIGHT", DeBuffsAnchor, "BOTTOMRIGHT", 0, 0)
+				self.Debuffs.initialAnchor = "BOTTOMRIGHT"
+				self.Debuffs["growth-x"] = "LEFT"
+				self.Debuffs["growth-y"] = "DOWN"
+				self.Debuffs.spacing = 8
 			end
 			
 			-- ========== EXPERIENCE & REPUTATION BARS REPOSITIONING ==========
