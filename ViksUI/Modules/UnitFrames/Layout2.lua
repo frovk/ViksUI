@@ -42,8 +42,11 @@ local Layout2Tags = {
 			enable = true,
 			top_left = {
 				enable = true,
-				tag = "[drk:color2][name][drk:afkdnd]",
+				tag = "[GetNameColor][NameLong]",
 				font_type = "name_font",
+				font = nil,  -- Use default from Layout2Fonts if nil
+				size = nil,  -- Use default from Layout2Fonts if nil
+				style = nil, -- Use default from Layout2Fonts if nil
 				x = 2,
 				y = -1,
 				justify = "LEFT",
@@ -52,14 +55,20 @@ local Layout2Tags = {
 				enable = false,
 				tag = "",
 				font_type = "name_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = 0,
 				y = -1,
 				justify = "CENTER",
 			},
 			top_right = {
-				enable = false,
-				-- tag = "[drk:color2][drk:Shp]",
+				enable = true,
+				tag = "[missinghp]",
 				font_type = "number_font",
+				font = nil,  -- Use default
+				size = 24,  -- Use default
+				style = nil, -- Use default
 				x = -2,
 				y = -1,
 				justify = "RIGHT",
@@ -71,6 +80,9 @@ local Layout2Tags = {
 				enable = true,
 				-- tag = "[drk:color][drk:power2]",
 				font_type = "number_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = 2,
 				y = 1,
 				justify = "LEFT",
@@ -79,14 +91,20 @@ local Layout2Tags = {
 				enable = false,
 				tag = "",
 				font_type = "name_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = 0,
 				y = 1,
 				justify = "CENTER",
 			},
 			bottom_right = {
 				enable = true,
-				-- tag = "[drk:color][cur|max]",
+				tag = "[drk:color]",
 				font_type = "number_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = -2,
 				y = 1,
 				justify = "RIGHT",
@@ -100,8 +118,11 @@ local Layout2Tags = {
 			enable = true,
 			top_left = {
 				enable = true,
-				tag = "[drk:level] [drk:color2][name][drk:afkdnd]",
+				tag = "[GetNameColor][NameLong]",
 				font_type = "name_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = 2,
 				y = -1,
 				justify = "LEFT",
@@ -110,14 +131,20 @@ local Layout2Tags = {
 				enable = false,
 				tag = "",
 				font_type = "name_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = 0,
 				y = -1,
 				justify = "CENTER",
 			},
 			top_right = {
 				enable = true,
-				tag = "[drk:color2][NameplateHealth]",
+				tag = "[missinghp]",
 				font_type = "number_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = -2,
 				y = -1,
 				justify = "RIGHT",
@@ -129,6 +156,9 @@ local Layout2Tags = {
 				enable = true,
 				-- tag = "[drk:color][drk:power2]",
 				font_type = "number_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = 2,
 				y = 1,
 				justify = "LEFT",
@@ -137,6 +167,9 @@ local Layout2Tags = {
 				enable = false,
 				tag = "",
 				font_type = "name_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = 0,
 				y = 1,
 				justify = "CENTER",
@@ -145,6 +178,9 @@ local Layout2Tags = {
 				enable = true,
 				tag = "[drk:color][NameplateHealth]",
 				font_type = "number_font",
+				font = nil,
+				size = nil,
+				style = nil,
 				x = -2,
 				y = 1,
 				justify = "RIGHT",
@@ -297,12 +333,17 @@ local function CreateTag(self, parent, tagConfig, point)
 	end
 	
 	local fontType = tagConfig.font_type or "name_font"
-	local font = Layout2Fonts[fontType]
-	if not font then
-		font = Layout2Fonts.name_font
+	local fontDefaults = Layout2Fonts[fontType]
+	if not fontDefaults then
+		fontDefaults = Layout2Fonts.name_font
 	end
 	
-	local fontString = T.SetFontString(parent, font.font, font.size, font.style)
+	-- Use tag-specific font settings, or fall back to defaults
+	local font = tagConfig.font or fontDefaults.font
+	local size = tagConfig.size or fontDefaults.size
+	local style = tagConfig.style or fontDefaults.style
+	
+	local fontString = T.SetFontString(parent, font, size, style)
 	fontString:SetJustifyH(tagConfig.justify or "LEFT")
 	fontString:SetPoint(point, parent, point, tagConfig.x or 0, tagConfig.y or 0)
 	
@@ -440,39 +481,57 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 			end
 			
 			-- ========== PORTRAIT SETUP ==========
-			-- Create new Layout2 portrait (replaces default portrait)
+			-- Remove existing portrait if present
 			if self.Portrait and self.Portrait:GetParent() == self and not self.Portrait.isLayout2 then
 				self.Portrait:Hide()
 				self.Portrait = nil
 			end
-			
-			self.Portrait = CreateFrame("Frame", self:GetName().."_Portrait", self, "BackdropTemplate")
-			self.Portrait:SetSize(Layout2Config.portrait.size, Layout2Config.portrait.size)
+
+			-- Create new Layout2 portrait based on portrait type from config
+			if C.unitframe.portrait_type == "3D" or C.unitframe.portrait_type == "OVERLAY" then
+				self.Portrait = CreateFrame("PlayerModel", self:GetName().."_Portrait", self)
+			else
+				self.Portrait = CreateFrame("Frame", self:GetName().."_Portrait", self, "BackdropTemplate")
+			end
 			self.Portrait.isLayout2 = true
-			
+
+			-- Set size and position
+			self.Portrait:SetSize(Layout2Config.portrait.size, Layout2Config.portrait.size)
 			if unitType == "player" then
 				self.Portrait:SetPoint(unpack(C.position.unitframes.player_portrait_2))
 			elseif unitType == "target" then
 				self.Portrait:SetPoint(unpack(C.position.unitframes.target_portrait_2))
 			end
-			
 			self.Portrait:SetFrameLevel(Layout2Config.portrait.frame_level)
-			self.Portrait:SetTemplate("Invisible")
-			self.Portrait:SetBackdropColor(unpack(C.media.border_color))
-			self.Portrait:SetBackdropBorderColor(0, 0, 0, 0)
-			CreateShadow(self.Portrait)
-			
-			self.Portrait.Icon = self.Portrait:CreateTexture(nil, "ARTWORK")
-			self.Portrait.Icon:SetAllPoints()
-			self.Portrait.Icon:SetTexCoord(unpack(Layout2Config.portrait.texcoord))
-			
+
+			-- Setup backdrop and shadow (only for non-PlayerModel frames)
+			if portraitType ~= "OVERLAY" or portraitType ~= "3D" then
+				self.Portrait:SetTemplate("Default")
+				self.Portrait:SetBackdropColor(unpack(C.media.border_color))
+				CreateShadow(self.Portrait)
+				
+				if portraitType == "ICONS" then
+					self.Portrait.classIcons = true
+				end
+				
+				-- Create portrait texture
+				self.Portrait.Icon = self.Portrait:CreateTexture(nil, "ARTWORK")
+				self.Portrait.Icon:SetAllPoints()
+				self.Portrait.Icon:SetTexCoord(unpack(Layout2Config.portrait.texcoord))
+			end
+
+			-- Add fake .backdrop property for ALL frame types (for Layout.lua compatibility)
+			self.Portrait.backdrop = {
+				SetBackdropBorderColor = function(...) end
+			}
+
 			-- Store player portrait reference AFTER creation for pet/target's target positioning
 			if unitType == "player" then
 				playerFramePortrait = self.Portrait
 			end
-			
-			-- Apply class color border if enabled (use SetBackdropColor instead of SetBackdropBorderColor)
-			if C.unitframe.portrait_classcolor_border == true then
+
+			-- Apply class color to portrait backdrop if enabled (only for non-3D/OVERLAY)
+			if C.unitframe.portrait_classcolor_border == true and portraitType ~= "3D" and portraitType ~= "OVERLAY" then
 				if unitType == "player" then
 					self.Portrait:SetBackdropColor(T.color.r, T.color.g, T.color.b)
 				elseif unitType == "target" then
@@ -488,7 +547,17 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 					end)
 				end
 			end
-			
+
+			-- OVERLAY specific positioning adjustments
+			if portraitType == "OVERLAY" and self.Health then
+				local healthTex = self.Health:GetStatusBarTexture()
+				self.Portrait:ClearAllPoints()
+				self.Portrait:SetPoint("TOPLEFT", healthTex, "TOPLEFT", 0, 0)
+				self.Portrait:SetPoint("BOTTOMRIGHT", healthTex, "BOTTOMRIGHT", 0, 1)
+				self.Portrait:SetFrameLevel(self.Health:GetFrameLevel())
+				self.Portrait:SetAlpha(0.5)
+			end
+						
 			-- ========== HEALTH FRAME SETUP ==========
 			local healthFrame = CreateFrame("Frame", self:GetName().."_HealthFrame", self, "BackdropTemplate")
 			healthFrame:SetSize(Layout2Config.health.width, Layout2Config.health.height)
