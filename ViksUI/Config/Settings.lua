@@ -352,10 +352,11 @@ C["raidframe"] = {
 --	Auras/Buffs/Debuffs options
 ----------------------------------------------------------------------------------------
 C["aura"] = {
-	["player_buff_size"] = 25,					-- Player buffs size
+	["player_buff_size"] = 30,					-- Player buffs size
 	["player_buff_mouseover"] = false,			-- Player buffs on mouseover
-	["debuff_size"] = 25,						-- Debuffs size on unitframes
-	["show_spiral"] = false,					-- Spiral on aura icons
+	["debuff_size"] = 24,						-- Debuffs size on unitframes
+	["player_debuff_size"] = 44,				-- Player debuffs size
+	["show_spiral"] = true,						-- Spiral on aura icons
 	["show_timer"] = true,						-- Show cooldown timer on aura icons
 	["player_auras"] = true,					-- Auras on player frame
 	["target_auras"] = true,					-- Auras on target frame
@@ -888,6 +889,75 @@ C["togglemenu"] = {
 	["classcolor"] = true,					-- Class color buttons
 }
 
+----------------------------------------------------------------------------------------
+-- Layout2
+----------------------------------------------------------------------------------------
+C["layout2"] = {
+	["enable"] = true,							-- Enable Layout2 design
+	["portrait_size"] = 58,						-- Portrait size for layout2
+	-- Player and Target frames
+	["player_width"] = 245,						-- Player frame width
+	["player_height"] = 36,						-- Player frame height
+	["target_width"] = 245,						-- Target frame width
+	["target_height"] = 36,						-- Target frame height
+	-- Pet, Focus, and Secondary frames
+	["pet_width"] = 119,						-- Pet frame width
+	["pet_height"] = 28,						-- Pet frame height
+	["targettarget_width"] = 119,				-- Target's target frame width
+	["targettarget_height"] = 28,				-- Target's target frame height
+	["focus_width"] = 119,						-- Focus frame width
+	["focus_height"] = 28,						-- Focus frame height
+	["focustarget_width"] = 119,				-- Focus target frame width
+	["focustarget_height"] = 28,				-- Focus target frame height
+	-- Arena and Boss frames
+	["arena_width"] = 150,						-- Arena frame width
+	["arena_height"] = 36,						-- Arena frame height
+	["boss_width"] = 150,						-- Boss frame width
+	["boss_height"] = 36,						-- Boss frame height
+	-- Textures
+	["health_texture"] = "Interface\\AddOns\\ViksUI\\Media\\textures\\normTex",
+	["power_texture"] = "Interface\\AddOns\\ViksUI\\Media\\textures\\normTex",
+	["textbar_texture"] = "Interface\\AddOns\\ViksUI\\Media\\textures\\backdrop",
+	
+	-- Layout2 Tags - Player Frame
+	["player_health_top_left_enable"] = true,					-- Show player health top-left tag
+	["player_health_top_left_tag"] = "[GetNameColor][NameLong]", -- Player health top-left tag format
+	["player_health_top_right_enable"] = true,					-- Show player health top-right tag
+	["player_health_top_right_tag"] = "[missinghp]",			-- Player health top-right tag format
+	["player_text_bar_bottom_left_enable"] = true,				-- Show player text bar bottom-left tag
+	["player_text_bar_bottom_left_tag"] = "[drk:color][power:current:shortvalue] || [power:max:shortvalue]", -- Player text bar bottom-left
+	["player_text_bar_bottom_right_enable"] = true,				-- Show player text bar bottom-right tag
+	["player_text_bar_bottom_right_tag"] = "[drk:color][NameplateHealth]", -- Player text bar bottom-right
+	
+	-- Layout2 Tags - Target Frame
+	["target_health_top_left_enable"] = true,					-- Show target health top-left tag
+	["target_health_top_left_tag"] = "[drk:level][GetNameColor] [NameLongAbbrev]", -- Target health top-left tag format
+	["target_health_top_right_enable"] = true,					-- Show target health top-right tag
+	["target_health_top_right_tag"] = "[missinghp]",			-- Target health top-right tag format
+	["target_health_bottom_right_enable"] = true,				-- Show target health bottom-right tag
+	["target_health_bottom_right_tag"] = "[DiffColor][classification]", -- Target health bottom-right tag
+	["target_text_bar_bottom_left_enable"] = true,				-- Show target text bar bottom-left tag
+	["target_text_bar_bottom_left_tag"] = "[drk:color][power:current:shortvalue] || [power:max:shortvalue]", -- Target text bar bottom-left
+	["target_text_bar_bottom_center_enable"] = true,				-- Show target text bar bottom-center tag
+	["target_text_bar_bottom_center_tag"] = "[drk:color][missingpp:short] || [missinghp:short]", -- Target text bar bottom-center
+	["target_text_bar_bottom_right_enable"] = true,				-- Show target text bar bottom-right tag
+	["target_text_bar_bottom_right_tag"] = "[drk:color][NameplateHealth]", -- Target text bar bottom-right
+	
+	-- Layout2 Fonts
+	["UFNamefont"] = "Interface\\Addons\\ViksUI\\Media\\Font\\ROADWAY.ttf",				-- Font to use on Names
+	["pixel_font"] = [=[Interface\Addons\ViksUI\Media\Font\pixel.ttf]=], 				-- DataText Font Normal
+	["name_font_size"] = 26,										-- Size of name font in Layout2
+	["name_font_style"] = "NONE",									-- Style of name font (NONE, OUTLINE, THICKOUTLINE)
+	["number_font_size"] = 12,										-- Size of number font in Layout2
+	["number_font_style"] = "OUTLINE",								-- Style of number font
+	
+	-- Layout2 Frame Configuration
+	["use_portrait_borders"] = true,								-- Use portrait-style borders for secondary frames
+	
+	-- Player Debuffs Repositioning
+	["player_debuff_size"] = 32,									-- Size of debuff icons on player frame
+	["debuff_spacing"] = 8,											-- Space between debuff icons
+}
 ----------------------------------------------------------------------------------------
 --	Position options
 --	BACKUP THIS FILE BEFORE UPDATING!
