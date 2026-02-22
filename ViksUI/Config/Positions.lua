@@ -68,6 +68,24 @@ C["position"] = {
 		["focus_castbar"] = {"TOPLEFT", UIParent, "BOTTOM", 449, 344},				-- Focus Castbar icon
 		["focus_castbar_heal"] = {"TOPLEFT", UIParent, "BOTTOM", 579, 450},			-- Focus Castbar icon Heal
 	},
+	-- Layout2 positioning
+	layout2 = {
+		-- Reference point for all Layout2 frames
+		-- Positioned at center of screen, 320px from bottom
+		["ref_point_x"] = 0,						-- Horizontal offset from screen center (0 = centered)
+		["ref_point_y"] = -320,						-- Vertical offset from bottom of screen
+		
+		-- Portrait offsets from reference point
+		["player_portrait_offset_x"] = -50,			-- Move player portrait to the left
+		["target_portrait_offset_x"] = 50,			-- Move target portrait to the right
+		
+		-- UnitFrame offsets from portrait
+		["unitframe_portrait_offset"] = -25,			-- Move unitframe toward center from portrait
+		
+		-- Castbar offsets
+		["player_castbar_offset_y"] = -6,			-- Space between text bar and castbar
+		["target_castbar_offset_y"] = -6,			-- Space between text bar and castbar
+	},
 	-- Filger positions
 	filger = {
 		["player_buff_icon"] = {"RIGHT", UIParent, "CENTER", -280, 23},				-- "P_BUFF_ICON"
