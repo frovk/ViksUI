@@ -18,106 +18,7 @@ C.unitframe.lines = false -- Disable auto height adjustment for Layout2 frames
 C.unitframe.extra_height_auto = false -- Disable auto height adjustment for Layout2 frames
 
 -- Update C.media.texture to use Layout2 texture
-C.media.texture = C.layout2.layout2_textbar_texture
-
-----------------------------------------------------------------------------------------
---	REFERENCE POINT SYSTEM
---	All frames are positioned relative to this central reference point
---	This allows moving the entire Layout2 around by simply adjusting ref_point
-----------------------------------------------------------------------------------------
-
--- Create the reference point frame (invisible anchor for all Layout2 frames)
-local refPointFrame = CreateFrame("Frame", "Layout2_ReferencePoint", UIParent)
-refPointFrame:SetSize(C.layout2.pet_width, C.layout2.pet_height)
-refPointFrame:SetPoint("CENTER", UIParent, "CENTER", C.position.layout2.ref_point_x, C.position.layout2.ref_point_y)
--- Optional: Create a debug frame to visualize reference point (comment out for production)
--- refPointFrame:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8"})
--- refPointFrame:SetBackdropColor(1, 0, 0, 0.5)
-
-print("|cff00ff00Layout2.lua: Reference point created at center, " .. (-C.layout2_position.ref_point_y) .. "px from bottom|r")
-
-----------------------------------------------------------------------------------------
---	POSITIONING HELPER FUNCTIONS
---	Anchor frames relative to reference point
-----------------------------------------------------------------------------------------
-
--- Position pet frame at reference point
-local function PositionPetFrame(petFrame)
-	if petFrame then
-		petFrame:ClearAllPoints()
-		petFrame:SetPoint("CENTER", refPointFrame, "CENTER", 0, 0)
-	end
-end
-
--- Position target's target frame below pet frame
-local function PositionTargetTargetFrame(totFrame, petFrame)
-	if totFrame and petFrame then
-		totFrame:ClearAllPoints()
-		-- Distance = pet height + portrait height
-		local verticalDistance = C.layout2.pet_height + C.layout2.portrait_size
-		totFrame:SetPoint("TOP", petFrame, "BOTTOM", 0, -verticalDistance)
-	end
-end
-
--- Position player portrait
--- Top right corner of portrait anchors to top left of pet frame, then move left 40px
-local function PositionPlayerPortrait(portrait)
-	if portrait then
-		portrait:ClearAllPoints()
-		portrait:SetPoint("TOPRIGHT", refPointFrame, "TOPLEFT", C.position.layout2.player_portrait_offset_x, 0)
-	end
-end
-
--- Position target portrait
--- Top left corner of portrait anchors to top right of pet frame, then move right 40px
-local function PositionTargetPortrait(portrait)
-	if portrait then
-		portrait:ClearAllPoints()
-		portrait:SetPoint("TOPLEFT", refPointFrame, "TOPRIGHT", -C.position.layout2.target_portrait_offset_x, 0)
-	end
-end
-
--- Position player unitframe
--- Top right of frame anchors to top left of player portrait, then move left 25px
-local function PositionPlayerUnitFrame(playerFrame, playerPortrait)
-	if playerFrame and playerPortrait then
-		playerFrame:ClearAllPoints()
-		playerFrame:SetPoint("TOPRIGHT", playerPortrait, "TOPLEFT", C.position.layout2.unitframe_portrait_offset, 0)
-	end
-end
-
--- Position target unitframe
--- Top left of frame anchors to top right of target portrait, then move right 25px
-local function PositionTargetUnitFrame(targetFrame, targetPortrait)
-	if targetFrame and targetPortrait then
-		targetFrame:ClearAllPoints()
-		targetFrame:SetPoint("TOPLEFT", targetPortrait, "TOPRIGHT", -C.position.layout2.unitframe_portrait_offset, 0)
-	end
-end
-
--- Position player castbar
-local function PositionPlayerCastbar(castbar, textFrame)
-	if castbar and textFrame then
-		castbar:ClearAllPoints()
-		castbar:SetPoint("TOPLEFT", textFrame, "BOTTOMLEFT", 2, C.position.layout2.player_castbar_offset_y)
-		castbar:SetWidth(C.layout2.player_width - 4)
-	end
-end
-
--- Position target castbar
-local function PositionTargetCastbar(castbar, textFrame)
-	if castbar and textFrame then
-		castbar:ClearAllPoints()
-		castbar:SetPoint("TOPRIGHT", textFrame, "BOTTOMRIGHT", -2, C.position.layout2.target_castbar_offset_y)
-		castbar:SetWidth(C.layout2.player_width - 4)
-	end
-end
-
--- Store references for later use in RegisterStyle hook
-local playerPortraitRef = nil
-local targetPortraitRef = nil
-local petFrameRef = nil
-local totFrameRef = nil
+C.media.texture = C.layout2.health_texture
 
 ----------------------------------------------------------------------------------------
 --	LAYOUT2 OPTIONS
@@ -420,6 +321,9 @@ local Layout2Config = {
 	},
 }
 
+----------------------------------------------------------------------------------------
+--	HELPER FUNCTIONS
+----------------------------------------------------------------------------------------
 -- Get frame dimensions based on unit type
 local function GetFrameDimensions(unitType)
 	if unitType == "player" or unitType == "target" then
@@ -431,10 +335,6 @@ local function GetFrameDimensions(unitType)
 		return C.layout2.pet_width, C.layout2.pet_height
 	end
 end
-
-----------------------------------------------------------------------------------------
---	HELPER FUNCTIONS
-----------------------------------------------------------------------------------------
 
 local function GetCreateShadow()
 	if CreateShadow then return CreateShadow end
@@ -638,8 +538,13 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 			end
 			self.Portrait.isLayout2 = true
 
-			-- Set size
+			-- Set size and position
 			self.Portrait:SetSize(Layout2Config.portrait.size, Layout2Config.portrait.size)
+			if unitType == "player" then
+				self.Portrait:SetPoint(unpack(C.position.unitframes.player_portrait))
+			elseif unitType == "target" then
+				self.Portrait:SetPoint(unpack(C.position.unitframes.target_portrait))
+			end
 			self.Portrait:SetFrameLevel(Layout2Config.portrait.frame_level)
 
 			-- Setup backdrop and shadow (only for non-PlayerModel frames)
@@ -659,11 +564,18 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 			else
 				-- For 3D and OVERLAY types, create a background frame with colored backdrop
 				if C.unitframe.portrait_type == "3D" or C.unitframe.portrait_type == "ICONS" then
-					local bgFrame = CreateFrame("Frame", nil, self, "BackdropTemplate")
+					local bgFrame = CreateFrame("Frame", nil, self, "BackdropTemplate")  -- Parent is self, not self.Portrait
 					bgFrame:SetFrameLevel(self.Portrait:GetFrameLevel() - 1)
 					bgFrame:SetTemplate("Invisible")
 					bgFrame:SetBackdropColor(unpack(C.media.backdrop_color))
 					CreateShadow(bgFrame)
+					
+					-- Position background frame to match portrait with 1px inset
+					if unitType == "player" then
+						bgFrame:SetPoint(unpack(C.position.unitframes.player_portrait))
+					elseif unitType == "target" then
+						bgFrame:SetPoint(unpack(C.position.unitframes.target_portrait))
+					end
 					bgFrame:SetSize(Layout2Config.portrait.size, Layout2Config.portrait.size)
 					
 					-- Inset portrait 1px into the background frame
@@ -686,14 +598,28 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 				SetBackdropBorderColor = function(...) end
 			}
 
-			-- Position portraits based on unit type
+			-- Store player portrait reference AFTER creation for pet/target's target positioning
 			if unitType == "player" then
-				playerPortraitRef = self.Portrait
-				PositionPlayerPortrait(self.Portrait)
-			elseif unitType == "target" then
-				targetPortraitRef = self.Portrait
-				PositionTargetPortrait(self.Portrait)
+				playerFramePortrait = self.Portrait
 			end
+
+			-- Apply class color to portrait backdrop if enabled (only for non-3D/OVERLAY)
+			-- if C.unitframe.portrait_classcolor_border == true and C.unitframe.portrait_type ~= "3D" and C.unitframe.portrait_type ~= "OVERLAY" then
+				-- if unitType == "player" then
+					-- self.Portrait:SetBackdropColor(T.color.r, T.color.g, T.color.b)
+				-- elseif unitType == "target" then
+					-- self.Portrait:RegisterEvent("PLAYER_TARGET_CHANGED")
+					-- self.Portrait:SetScript("OnEvent", function()
+						-- local _, class = UnitClass("target")
+						-- local color = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[class]
+						-- if color then
+							-- self.Portrait:SetBackdropColor(color.r, color.g, color.b)
+						-- else
+							-- self.Portrait:SetBackdropColor(unpack(C.media.border_color))
+						-- end
+					-- end)
+				-- end
+			-- end
 
 			-- OVERLAY specific positioning adjustments
 			if C.unitframe.portrait_type == "OVERLAY" and self.Health then
@@ -707,20 +633,7 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 						
 			-- ========== HEALTH FRAME SETUP ==========
 			local healthFrame = CreateFrame("Frame", self:GetName().."_HealthFrame", self, "BackdropTemplate")
-			
-			-- Get frame dimensions
-			local frameWidth, frameHeight = C.layout2.player_width, C.layout2.player_height
-			if unitType == "target" then
-				frameWidth, frameHeight = C.layout2.target_width, C.layout2.target_height
-			elseif unitType == "pet" then
-				frameWidth, frameHeight = C.layout2.pet_width, C.layout2.pet_height
-				petFrameRef = self
-			elseif unitType == "targettarget" then
-				frameWidth, frameHeight = C.layout2.targettarget_width, C.layout2.targettarget_height
-				totFrameRef = self
-			end
-			
-			healthFrame:SetSize(frameWidth, frameHeight)
+			healthFrame:SetSize(Layout2Config.health.width, Layout2Config.health.height)
 			healthFrame:SetPoint("LEFT", self, "LEFT", 0, 0)
 			healthFrame:SetFrameLevel(Layout2Config.health.frame_level)
 			healthFrame:SetTemplate("Invisible")
@@ -732,7 +645,7 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 				self.Health:SetParent(healthFrame)
 				self.Health:ClearAllPoints()
 				self.Health:SetAllPoints()
-				self.Health:SetStatusBarTexture(C.unitframe.layout2_health_texture)
+				self.Health:SetStatusBarTexture(C.layout2.health_texture)
 				self.Health:SetFrameLevel(Layout2Config.health.frame_level+1)
 				if C.unitframe.own_color == true then
 					self.Health.colorTapping = false
@@ -756,7 +669,7 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 				if not self.Health.bg then
 					self.Health.bg = self.Health:CreateTexture(nil, "BORDER")
 					self.Health.bg:SetAllPoints()
-					self.Health.bg:SetTexture(C.unitframe.layout2_health_texture)
+					self.Health.bg:SetTexture(C.layout2.health_texture)
 					if C.unitframe.own_color == true then
 						self.Health.bg:SetVertexColor(unpack(C.unitframe.uf_color_bg))
 					else
@@ -783,6 +696,62 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 			
 			-- Apply custom health bar tags from Layout2Tags
 			ApplyHealthBarTags(self, unitType)
+			
+			-- ========== PLAYER FRAME INDICATORS (Layout2 adjustments) ==========
+			if unitType == "player" then
+				-- FlashInfo frame for mana level display
+				self.FlashInfo = CreateFrame("Frame", "FlashInfo", self)
+				self.FlashInfo:SetScript("OnUpdate", T.UpdateManaLevel)
+				self.FlashInfo:SetFrameLevel(self.Health:GetFrameLevel() + 1)
+				self.FlashInfo:SetAllPoints(self.Health)  -- Cover entire health bar
+
+				-- Mana level text - centered on health bar
+				self.FlashInfo.ManaLevel = T.SetFontString(self.FlashInfo, C.layout2.UFNamefont or C.font.unit_frames_font, C.layout2.name_font_size, C.layout2.name_font_style)
+				self.FlashInfo.ManaLevel:SetPoint("CENTER", self.Health, "CENTER", 0, 0)
+				
+				-- Optional: Add shadow to mana text for better readability
+				if Layout2Shadow.name_shadow.enable then
+					self.FlashInfo.ManaLevel:SetShadowColor(unpack(Layout2Shadow.name_shadow.color))
+					self.FlashInfo.ManaLevel:SetShadowOffset(Layout2Shadow.name_shadow.offset_x, Layout2Shadow.name_shadow.offset_y)
+				end
+
+				-- Combat icon - reposition for Layout2
+				if self.CombatIndicator then
+					self.CombatIndicator:SetSize(20, 24)
+					self.CombatIndicator:ClearAllPoints()
+					self.CombatIndicator:SetPoint("TOPRIGHT", self.Health, "TOPRIGHT", -2, -2)
+					self.CombatIndicator:SetTexture("Interface\\AddOns\\ViksUI\\Media\\Other\\combat2")
+				end
+
+				-- Resting icon - reposition for Layout2
+				if self.RestingIndicator then
+					self.RestingIndicator:SetSize(18, 18)
+					self.RestingIndicator:ClearAllPoints()
+					self.RestingIndicator:SetPoint("BOTTOMLEFT", self.Health, "TOPLEFT", -4, -4)
+					self.RestingIndicator:SetTexture("Interface\\AddOns\\ViksUI\\Media\\Other\\resting")
+				end
+
+				-- Leader icon - reposition for Layout2
+				if self.LeaderIndicator then
+					self.LeaderIndicator:SetSize(14, 14)
+					self.LeaderIndicator:ClearAllPoints()
+					self.LeaderIndicator:SetPoint("TOPLEFT", self.Health, "TOPLEFT", 2, -18)
+				end
+
+				-- Assistant icon - reposition for Layout2
+				if self.AssistantIndicator then
+					self.AssistantIndicator:SetSize(12, 12)
+					self.AssistantIndicator:ClearAllPoints()
+					self.AssistantIndicator:SetPoint("TOPLEFT", self.Health, "TOPLEFT", 2, -32)
+				end
+
+				-- LFD role icon - reposition for Layout2
+				if self.GroupRoleIndicator then
+					self.GroupRoleIndicator:SetSize(12, 12)
+					self.GroupRoleIndicator:ClearAllPoints()
+					self.GroupRoleIndicator:SetPoint("TOPRIGHT", self.Health, "TOPRIGHT", -16, -2)
+				end
+			end
 			
 			-- ========== POWER FRAME SETUP ==========
 			if self.Power then
@@ -843,10 +812,13 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 			
 			-- ========== CASTBAR REPOSITIONING ==========
 			if self.Castbar then
+				self.Castbar:ClearAllPoints()
 				if unitType == "player" then
-					PositionPlayerCastbar(self.Castbar, textFrame)
+					self.Castbar:SetPoint("TOPLEFT", textFrame, "BOTTOMLEFT", 2, Layout2Config.castbar.offset_y)
+					self.Castbar:SetWidth(Layout2Config.text_bar.width-4)
 				elseif unitType == "target" then
-					PositionTargetCastbar(self.Castbar, textFrame)
+					self.Castbar:SetPoint("TOPRIGHT", textFrame, "BOTTOMRIGHT", -2, Layout2Config.castbar.offset_y)
+					self.Castbar:SetWidth(Layout2Config.text_bar.width-4)
 				end
 			end
 			
@@ -1016,19 +988,21 @@ function oUF:RegisterStyle(styleName, sharedFunc)
 				end
 			end
 			
-			-- ========== POSITION FRAMES RELATIVE TO REFERENCE POINT ==========
+			-- ========== PET & TARGET'S TARGET POSITIONING ==========
+			-- Position pet frame to the right of player portrait
+			-- Position target's target below pet frame
 			if unitType == "player" then
-				-- Position player unitframe and portrait
-				PositionPlayerUnitFrame(self, playerPortraitRef)
-				
-				-- Schedule pet and targettarget positioning after frames are created
 				C_Timer.After(0.1, function()
-					if petFrameRef then PositionPetFrame(petFrameRef) end
-					if totFrameRef then PositionTargetTargetFrame(totFrameRef, petFrameRef) end
+					if oUF_Pet and playerFramePortrait then
+						oUF_Pet:ClearAllPoints()
+						oUF_Pet:SetPoint("TOPLEFT", playerFramePortrait, "TOPRIGHT", Layout2Config.portrait.pet_offset_x, Layout2Config.portrait.pet_offset_y)
+					end
+					
+					if oUF_TargetTarget and oUF_Pet then
+						oUF_TargetTarget:ClearAllPoints()
+						oUF_TargetTarget:SetPoint("BOTTOMLEFT", playerFramePortrait, "BOTTOMRIGHT", Layout2Config.portrait.pet_offset_x, 0)
+					end
 				end)
-			elseif unitType == "target" then
-				-- Position target unitframe and portrait
-				PositionTargetUnitFrame(self, targetPortraitRef)
 			end
 			
 			return self
